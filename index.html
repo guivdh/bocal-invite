@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Invitation Bocal</title>
+<meta property="og:title" content="Rejoins mon bocal">
+<meta property="og:description" content="Bocal, le Tricount des liens : on range ensemble les liens qu'on s'envoie.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,500;9..40,700;9..40,800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #FBF3E4;
+    --surface: #FFFFFF;
+    --ink: #2B1D12;
+    --muted: #7A6450;
+    --sticker: #F2C14E;
+    --accent: #E4572E;
+    --glass: #E9F1F0;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "DM Sans", system-ui, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+  }
+  main { width: 100%; max-width: 420px; }
+  .logo { font-weight: 800; font-size: 22px; letter-spacing: -1px; margin: 0 0 28px; }
+  .jar {
+    width: 84px; height: 110px; margin: 0 0 20px; position: relative;
+  }
+  .jar .lid {
+    position: absolute; top: 0; left: 10px; right: 10px; height: 18px;
+    background: var(--accent); border: 2.5px solid var(--ink); border-radius: 6px;
+  }
+  .jar .glass {
+    position: absolute; top: 15px; left: 0; right: 0; bottom: 0;
+    background: var(--glass); border: 2.5px solid var(--ink);
+    border-radius: 22px 22px 26px 26px;
+  }
+  .jar .token {
+    position: absolute; width: 20px; height: 20px; border-radius: 6px;
+    border: 1.2px solid rgba(43, 29, 18, .55);
+  }
+  h1 { font-size: 30px; line-height: 1.1; margin: 0 0 10px; font-weight: 800; }
+  h1 span { color: var(--accent); }
+  p { font-size: 16px; line-height: 1.45; color: var(--muted); margin: 0 0 22px; }
+  .card {
+    background: var(--surface); border: 2px solid var(--ink); border-radius: 20px;
+    padding: 18px; text-align: center; margin-bottom: 18px;
+  }
+  .code {
+    font-size: 32px; font-weight: 800; letter-spacing: 5px;
+    font-variant-numeric: tabular-nums; margin: 4px 0 2px;
+  }
+  .label { font-size: 13px; color: var(--muted); font-weight: 700; letter-spacing: .8px; }
+  .btn {
+    display: block; width: 100%; text-align: center; text-decoration: none;
+    font: inherit; font-weight: 800; font-size: 17px; cursor: pointer;
+    padding: 16px; border-radius: 16px; border: 2px solid var(--ink);
+    background: var(--ink); color: var(--paper);
+    box-shadow: 3px 3px 0 var(--sticker);
+  }
+  .btn.secondary { background: var(--surface); color: var(--ink); box-shadow: none; margin-top: 10px; }
+  .btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--sticker); }
+  .help { margin-top: 26px; font-size: 15px; }
+  .help strong { color: var(--ink); }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<main>
+  <p class="logo">bocal</p>
+  <div class="jar" aria-hidden="true">
+    <div class="glass"></div>
+    <div class="lid"></div>
+    <div class="token" style="left:14px;bottom:10px;background:#E1306C"></div>
+    <div class="token" style="left:36px;bottom:12px;background:#FCE8B2"></div>
+    <div class="token" style="left:22px;bottom:32px;background:#D6EBD3"></div>
+  </div>
+
+  <div id="invite">
+    <h1>On t'invite dans un <span>bocal</span></h1>
+    <p>Un bocal, c'est une liste de liens qu'on remplit à plusieurs : recettes, sorties, vidéos…</p>
+    <div class="card">
+      <div class="label">CODE DU BOCAL</div>
+      <div class="code" id="code">—</div>
+    </div>
+    <a class="btn" id="open" href="#">Ouvrir dans Bocal</a>
+    <button class="btn secondary" id="copy" type="button">Copier le code</button>
+    <p class="help" id="noapp">
+      L'app ne s'ouvre pas ? Bocal est encore en test : demande-la à la personne qui t'a invité·e.
+      Ensuite, ouvre Bocal, touche <strong>« J'ai déjà des bocaux »</strong> ou
+      <strong>« J'ai un code »</strong>, et entre ce code.
+    </p>
+  </div>
+
+  <div id="missing" class="hidden">
+    <h1>Lien incomplet</h1>
+    <p>Ce lien d'invitation ne contient pas de code. Demande à la personne de te le renvoyer.</p>
+  </div>
+</main>
+<script>
+  (function () {
+    var params = new URLSearchParams(location.search);
+    var raw = (params.get('c') || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (raw.length !== 8) {
+      document.getElementById('invite').classList.add('hidden');
+      document.getElementById('missing').classList.remove('hidden');
+      return;
+    }
+    var pretty = raw.slice(0, 4) + '-' + raw.slice(4);
+    document.getElementById('code').textContent = pretty;
+
+    var fallback = location.origin + location.pathname + '?c=' + pretty + '&app=0';
+    var android = /android/i.test(navigator.userAgent);
+    var link = android
+      ? 'intent://join/' + raw + '#Intent;scheme=bocal;package=be.gvdh.bocal;S.browser_fallback_url=' +
+        encodeURIComponent(fallback) + ';end'
+      : 'bocal://join/' + raw;
+    document.getElementById('open').href = link;
+
+    document.getElementById('copy').addEventListener('click', function () {
+      var button = this;
+      navigator.clipboard.writeText(pretty).then(function () {
+        button.textContent = 'Code copié';
+      });
+    });
+
+    if (android && params.get('app') !== '0') {
+      location.href = link;
+    }
+  })();
+</script>
+</body>
+</html>
