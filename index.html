@@ -7,10 +7,10 @@
 <title>Invitation Bocal</title>
 <meta property="og:title" content="Rejoins mon bocal">
 <meta property="og:description" content="Bocal, le Tricount des liens : on range ensemble les liens qu'on s'envoie.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,500;9..40,700;9..40,800&display=swap" rel="stylesheet">
 <style>
+  @font-face { font-family: "DM Sans"; font-weight: 500; src: url("fonts/DMSans-Regular.ttf") format("truetype"); font-display: swap; }
+  @font-face { font-family: "DM Sans"; font-weight: 700; src: url("fonts/DMSans-Bold.ttf") format("truetype"); font-display: swap; }
+  @font-face { font-family: "DM Sans"; font-weight: 800; src: url("fonts/DMSans-ExtraBold.ttf") format("truetype"); font-display: swap; }
   :root {
     --paper: #FBF3E4;
     --surface: #FFFFFF;
@@ -74,6 +74,8 @@
   .help { margin-top: 26px; font-size: 15px; }
   .help strong { color: var(--ink); }
   .hidden { display: none; }
+  .legal { font-size: 13px; margin-top: 30px; }
+  .legal a { color: var(--muted); }
 </style>
 </head>
 <body>
@@ -102,6 +104,8 @@
       <strong>« J'ai un code »</strong>, et entre ce code.
     </p>
   </div>
+
+  <p class="legal"><a href="privacy.html">Confidentialité</a> · <a href="terms.html">Conditions</a> · Aucun cookie, aucun traceur.</p>
 
   <div id="missing" class="hidden">
     <h1>Lien incomplet</h1>
