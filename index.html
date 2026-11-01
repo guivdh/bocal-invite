@@ -98,6 +98,11 @@
     </div>
     <a class="btn" id="open" href="#">Ouvrir dans Bocal</a>
     <button class="btn secondary" id="copy" type="button">Copier le code</button>
+    <p class="help hidden" id="inapp">
+      Tu es dans le navigateur d'une autre app, qui ne sait pas ouvrir Bocal.
+      Ouvre cette page dans <strong>Chrome</strong> (menu <strong>⋮</strong>, « Ouvrir dans le navigateur »),
+      ou copie le code et entre-le dans Bocal : <strong>« J'ai un code d'invitation »</strong>.
+    </p>
     <p class="help" id="noapp">
       L'app ne s'ouvre pas ? Bocal est encore en test : demande-la à la personne qui t'a invité·e.
       Ensuite, ouvre Bocal, touche <strong>« J'ai déjà des bocaux »</strong> ou
@@ -116,16 +121,20 @@
   (function () {
     var params = new URLSearchParams(location.search);
     var raw = (params.get('c') || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
-    if (raw.length !== 8) {
+    if (raw.length !== 10) {
       document.getElementById('invite').classList.add('hidden');
       document.getElementById('missing').classList.remove('hidden');
       return;
     }
-    var pretty = raw.slice(0, 4) + '-' + raw.slice(4);
+    var pretty = raw.slice(0, 5) + '-' + raw.slice(5);
     document.getElementById('code').textContent = pretty;
 
     var fallback = location.origin + location.pathname + '?c=' + pretty + '&app=0';
     var android = /android/i.test(navigator.userAgent);
+    // Navigateur intégré à une autre app (scanner, Instagram, Gmail…) : il ne
+    // sait pas ouvrir intent://, la redirection finirait sur une page d'erreur.
+    var inApp = android && /; wv\)/.test(navigator.userAgent);
+    if (inApp) document.getElementById('inapp').classList.remove('hidden');
     var link = android
       ? 'intent://join/' + raw + '#Intent;scheme=bocal;package=be.gvdh.bocal;S.browser_fallback_url=' +
         encodeURIComponent(fallback) + ';end'
@@ -139,7 +148,7 @@
       });
     });
 
-    if (android && params.get('app') !== '0') {
+    if (android && !inApp && params.get('app') !== '0') {
       location.href = link;
     }
   })();
