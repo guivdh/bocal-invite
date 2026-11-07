@@ -73,6 +73,10 @@
   .btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--sticker); }
   .help { margin-top: 26px; font-size: 15px; }
   .help strong { color: var(--ink); }
+  .notice {
+    background: var(--surface); border: 2px solid var(--accent); border-radius: 16px;
+    padding: 14px 16px; color: var(--ink); margin-top: 16px;
+  }
   .hidden { display: none; }
   .legal { font-size: 13px; margin-top: 30px; }
   .legal a { color: var(--muted); }
@@ -98,14 +102,25 @@
     </div>
     <a class="btn" id="open" href="#">Ouvrir dans Bocal</a>
     <button class="btn secondary" id="copy" type="button">Copier le code</button>
+    <p class="help notice hidden" id="failed">
+      Bocal ne s'est pas ouvert ? <strong>Le code est copié.</strong>
+      Ouvre Bocal toi-même, touche <strong>« J'ai un code d'invitation »</strong> et colle le code.
+    </p>
     <p class="help hidden" id="inapp">
       Tu es dans le navigateur d'une autre app, qui ne sait pas ouvrir Bocal.
       Ouvre cette page dans <strong>Chrome</strong> (menu <strong>⋮</strong>, « Ouvrir dans le navigateur »),
       ou copie le code et entre-le dans Bocal : <strong>« J'ai un code d'invitation »</strong>.
     </p>
+    <p class="help hidden" id="inapp-ios">
+      Tu es dans le navigateur d'une autre app : il bloque souvent l'ouverture de Bocal.
+      Ouvre cette page dans <strong>Safari</strong> (menu <strong>···</strong> ou icône boussole, « Ouvrir dans Safari »),
+      ou copie le code et entre-le dans Bocal : <strong>« J'ai un code d'invitation »</strong>.
+    </p>
     <p class="help" id="noapp">
-      L'app ne s'ouvre pas ? Installe Bocal depuis <a href="https://play.google.com/store/apps/details?id=be.gvdh.bocal">Google Play</a> ou, sur iPhone, depuis l'<a href="https://apps.apple.com/app/id6829795671">App Store</a>.
-      Ensuite, ouvre Bocal, touche <strong>« J'ai un code d'invitation »</strong>, et entre ce code.
+      Le bouton « Ouvrir dans Bocal » ne marche pas ? Copie le code, ouvre Bocal,
+      touche <strong>« J'ai un code d'invitation »</strong> et colle-le.
+      Pas encore l'app ? Installe Bocal depuis l'<a href="https://apps.apple.com/app/id6829795671">App Store</a>
+      ou <a href="https://play.google.com/store/apps/details?id=be.gvdh.bocal">Google Play</a>.
     </p>
   </div>
 
@@ -134,17 +149,64 @@
     // sait pas ouvrir intent://, la redirection finirait sur une page d'erreur.
     var inApp = android && /; wv\)/.test(navigator.userAgent);
     if (inApp) document.getElementById('inapp').classList.remove('hidden');
+    // Sur iPhone, le navigateur intégré d'une autre app (Instagram, Messenger,
+    // Gmail…) bloque souvent bocal:// sans rien afficher. Safari, Chrome et
+    // Firefox pour iPhone ont tous « Safari/ » (ou CriOS, FxiOS) dans leur
+    // agent ; les vues intégrées non, ou portent le nom de leur app.
+    var ua = navigator.userAgent;
+    var ios = /iPhone|iPad|iPod/.test(ua) ||
+      (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+    var inAppIos = ios && (!/Safari\//.test(ua) ||
+      /FBAN|FBAV|FB_IAB|Instagram|LinkedInApp|Snapchat|GSA\/|Line\/|Twitter|MicroMessenger/.test(ua));
+    if (inAppIos) document.getElementById('inapp-ios').classList.remove('hidden');
     var link = android
       ? 'intent://join/' + raw + '#Intent;scheme=bocal;package=be.gvdh.bocal;S.browser_fallback_url=' +
         encodeURIComponent(fallback) + ';end'
       : 'bocal://join/' + raw;
     document.getElementById('open').href = link;
 
+    // Copie le code. navigator.clipboard manque dans certaines vues intégrées :
+    // on passe alors par un champ caché.
+    function copyCode() {
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          return navigator.clipboard.writeText(pretty);
+        }
+      } catch (e) {}
+      return new Promise(function (resolve, reject) {
+        var field = document.createElement('textarea');
+        field.value = pretty;
+        field.setAttribute('readonly', '');
+        field.style.position = 'fixed';
+        field.style.opacity = '0';
+        document.body.appendChild(field);
+        field.select();
+        field.setSelectionRange(0, pretty.length);
+        var ok = false;
+        try { ok = document.execCommand('copy'); } catch (e) {}
+        document.body.removeChild(field);
+        ok ? resolve() : reject();
+      });
+    }
+
     document.getElementById('copy').addEventListener('click', function () {
       var button = this;
-      navigator.clipboard.writeText(pretty).then(function () {
+      copyCode().then(function () {
         button.textContent = 'Code copié';
-      });
+      }, function () {});
+    });
+
+    // En touchant « Ouvrir dans Bocal », on copie aussi le code. Si la page
+    // est toujours visible après 2 s, l'app ne s'est pas ouverte : on le dit.
+    document.getElementById('open').addEventListener('click', function () {
+      copyCode().then(function () {}, function () {});
+      setTimeout(function () {
+        if (document.visibilityState === 'visible' && document.hasFocus()) {
+          var failed = document.getElementById('failed');
+          failed.classList.remove('hidden');
+          failed.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 2000);
     });
 
     if (android && !inApp && params.get('app') !== '0') {
